@@ -173,6 +173,18 @@ class DatasetCatalog(object):
             "img_dir": "ILSVRC2015/Data/VID",
             "anno_path": "ILSVRC2015/Annotations/VID",
             "img_index": "ILSVRC2015/ImageSets/VID_val_videos.txt"
+        },
+
+        ##############################################
+        "HAKE_train": {
+            "img_dir": "HAKE/Images",
+            "anno_path": "HAKE/Annotations",
+            "img_index": "HAKE/ImageSets/VID_train.txt"
+        },
+        "HAKE_val": {
+            "img_dir": "HAKE/Images",
+            "anno_path": "HAKE/Annotations",
+            "img_index": "HAKE/ImageSets/VID_val.txt"
         }
     }
 
@@ -212,9 +224,10 @@ class DatasetCatalog(object):
                 "rdn": "VIDRDNDataset",
                 "mega": "VIDMEGADataset",
                 "fgfa": "VIDFGFADataset",
-                "dff": "VIDDFFDataset"
+                "dff": "VIDDFFDataset",
+                "hake": "HAKEDataset"
             }
-            if ("DET" in name) or ("VID" in name):
+            if ("DET" in name) or ("VID" in name) or ("HAKE" in name):
                 data_dir = DatasetCatalog.DATA_DIR
                 attrs = DatasetCatalog.DATASETS[name]
                 args = dict(

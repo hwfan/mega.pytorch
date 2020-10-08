@@ -33,3 +33,7 @@ dist/
 
 # project dirs
 /models
+visualization*/
+training*/
+datasets/
+ava-*

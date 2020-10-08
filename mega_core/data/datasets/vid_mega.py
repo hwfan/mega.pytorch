@@ -2,10 +2,10 @@ from PIL import Image
 import sys
 import numpy as np
 
-from .vid import VIDDataset
+from .vid_hake import HAKEDataset
 from mega_core.config import cfg
 
-class VIDMEGADataset(VIDDataset):
+class VIDMEGADataset(HAKEDataset):
     def __init__(self, image_set, data_dir, img_dir, anno_path, img_index, transforms, is_train=True):
         super(VIDMEGADataset, self).__init__(image_set, data_dir, img_dir, anno_path, img_index, transforms, is_train=is_train)
         if not self.is_train:

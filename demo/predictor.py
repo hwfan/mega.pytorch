@@ -11,7 +11,7 @@ from torchvision.transforms import functional as F
 from mega_core.modeling.detector import build_detection_model
 from mega_core.utils.checkpoint import DetectronCheckpointer
 from mega_core.structures.image_list import to_image_list
-
+import ipdb
 from cv2 import (CAP_PROP_FRAME_WIDTH, CAP_PROP_FRAME_HEIGHT, CAP_PROP_FPS,
                  CAP_PROP_FRAME_COUNT, CAP_PROP_FOURCC,
                  CAP_PROP_POS_FRAMES, VideoWriter_fourcc)

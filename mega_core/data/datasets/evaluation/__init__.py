@@ -2,7 +2,7 @@ from mega_core.data import datasets
 
 from .coco import coco_evaluation
 from .voc import voc_evaluation
-from .cityscapes import abs_cityscapes_evaluation
+# from .cityscapes import abs_cityscapes_evaluation
 from .vid import vid_evaluation
 
 def evaluate(dataset, predictions, output_folder, **kwargs):
