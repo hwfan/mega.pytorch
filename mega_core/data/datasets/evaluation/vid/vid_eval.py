@@ -42,30 +42,38 @@ def do_vid_evaluation(dataset, predictions, output_folder, box_only, motion_spec
     else:
         motion_ranges = [[0.0, 1.0]]
         motion_name = ["all"]
-    result = eval_detection_vid(
-        pred_boxlists=pred_boxlists,
-        gt_boxlists=gt_boxlists,
-        iou_thresh=0.5,
-        motion_ranges=motion_ranges,
-        motion_specific=motion_specific,
-        use_07_metric=False
-    )
-    result_str = ""
-    template_str = 'AP50 | motion={:>6s} = {:0.4f}\n'
-    for motion_index in range(len(motion_name)):
-        result_str += template_str.format(motion_name[motion_index], result[motion_index]["map"])
-    result_str += "Category AP:\n"
-    for i, ap in enumerate(result[0]["ap"]):
-        if i == 0:  # skip background
-            continue
-        result_str += "{:<16}: {:.4f}\n".format(
-            dataset.map_class_id_to_class_name(i), ap
+    maps = []
+    template_str = 'AP{:d} | motion={:>6s} = {:0.4f}\n'
+    for thres in [0.5, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]:
+        result = eval_detection_vid(
+            pred_boxlists=pred_boxlists,
+            gt_boxlists=gt_boxlists,
+            iou_thresh=thres,
+            motion_ranges=motion_ranges,
+            motion_specific=motion_specific,
+            use_07_metric=False
         )
+        result_str = ""
+        for motion_index in range(len(motion_name)):
+            result_str += template_str.format(int(thres*100), motion_name[motion_index], result[motion_index]["map"])
+        maps.append(result[0]["map"])
+        # result_str += "Category AP:\n"
+        # for i, ap in enumerate(result[0]["ap"]):
+        #     if i == 0:  # skip background
+        #         continue
+        #     result_str += "{:<16}: {:.4f}\n".format(
+        #         dataset.map_class_id_to_class_name(i), ap
+        #     )
+        logger.info("\n" + result_str)
+        if output_folder:
+            with open(os.path.join(output_folder, "result.txt"), "a") as fid:
+                fid.write(result_str)
+    template_str = 'AP_mean = {:0.4f}\n'
+    result_str = template_str.format(np.array(maps).mean())
     logger.info("\n" + result_str)
     if output_folder:
-        with open(os.path.join(output_folder, "result.txt"), "w") as fid:
+        with open(os.path.join(output_folder, "result.txt"), "a") as fid:
             fid.write(result_str)
-
     return result
 
 
@@ -146,6 +154,7 @@ def eval_detection_vid(pred_boxlists,
             gt_boxlists=gt_boxlists,
             motion_ious=motion_ious,
             iou_thresh=iou_thresh,
+            mode='all'
             motion_range=motion_range,
         )
         ap = calc_detection_vid_ap(prec, rec, use_07_metric=use_07_metric)
@@ -153,7 +162,7 @@ def eval_detection_vid(pred_boxlists,
     return motion_ap
 
 
-def calc_detection_vid_prec_rec(gt_boxlists, pred_boxlists, motion_ious, iou_thresh=0.5, motion_range=[0., 1.]):
+def calc_detection_vid_prec_rec(gt_boxlists, pred_boxlists, motion_ious, iou_thresh=0.5, mode='all', motion_range=[0., 1.]):
     n_pos = defaultdict(int)
     score = defaultdict(list)
     match = defaultdict(list)
@@ -168,6 +177,7 @@ def calc_detection_vid_prec_rec(gt_boxlists, pred_boxlists, motion_ious, iou_thr
         if empty_weight == 1:
             empty_weight = 0
     for gt_boxlist, pred_boxlist, motion_iou in zip(gt_boxlists, pred_boxlists, motion_ious):
+        # import ipdb; ipdb.set_trace()
         pred_bbox = pred_boxlist.bbox.numpy()
         pred_label = pred_boxlist.get_field("labels").numpy()
         pred_score = pred_boxlist.get_field("scores").numpy()
@@ -176,12 +186,14 @@ def calc_detection_vid_prec_rec(gt_boxlists, pred_boxlists, motion_ious, iou_thr
         gt_ignore = np.zeros(len(gt_bbox))
 
         for gt_index, gt in enumerate(gt_bbox):
-            if motion_iou:
-                if motion_iou[gt_index] < motion_range[0] or motion_iou[gt_index] > motion_range[1]:
-                    gt_ignore[gt_index] = 1
-                else:
-                    gt_ignore[gt_index] = 0
-
+            area = (gt[2]-gt[0]) * (gt[3]-gt[1])
+            if area > 32*32:
+                gt_ignore[gt_index] = 1
+            # if motion_iou:
+            #     if motion_iou[gt_index] < motion_range[0] or motion_iou[gt_index] > motion_range[1]:
+            #         gt_ignore[gt_index] = 1
+            #     else:
+            #         gt_ignore[gt_index] = 0
         for l in np.unique(np.concatenate((pred_label, gt_label)).astype(int)):
             pred_mask_l = pred_label == l
             pred_bbox_l = pred_bbox[pred_mask_l]
@@ -253,7 +265,7 @@ def calc_detection_vid_prec_rec(gt_boxlists, pred_boxlists, motion_ious, iou_thr
                     # pred_ignore[l].append(0)
 
     n_fg_class = max(n_pos.keys()) + 1
-    print(n_pos)
+    # print(n_pos)
     prec = [None] * n_fg_class
     rec = [None] * n_fg_class
 

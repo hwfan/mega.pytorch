@@ -85,5 +85,10 @@ def load_state_dict(model, loaded_state_dict, flownet=False):
     loaded_state_dict = strip_prefix_if_present(loaded_state_dict, prefix="module.")
     align_and_update_state_dicts(model_state_dict, loaded_state_dict, flownet=flownet)
 
+    
+    ks = list(model_state_dict.keys())
+    for k in ks:
+        if 'module.roi_heads.box.predictor.cls_score' in k or 'module.roi_heads.box.predictor.bbox_pred' in k:
+            del model_state_dict[k]
     # use strict loading
-    model.load_state_dict(model_state_dict)
+    model.load_state_dict(model_state_dict, strict=False)
